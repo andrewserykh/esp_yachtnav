@@ -15,7 +15,6 @@ void display_DEBUG(){
     display.display();
 }
 
-
 void display_WIFI(){
   display.clear();
   display.setFont(ArialMT_Plain_10);

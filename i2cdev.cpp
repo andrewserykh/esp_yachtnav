@@ -51,5 +51,3 @@ float i2cdev::getHeading(){
   heading = heading *57.3;
   return heading;
 }
-
-

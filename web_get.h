@@ -45,19 +45,38 @@
           else if (strstr(linebuf,"GET /dir1m") > 0){
             COG=COG-1;
             if (COG<0) COG=360;
+            prefs.begin("setup", false);
+            prefs.putUInt("cog", (int)COG);
+            prefs.end();                        
           }
           else if (strstr(linebuf,"GET /dir10m") > 0){
             COG=COG-10;
             if (COG<0) COG=360-(COG*-1);
+            prefs.begin("setup", false);
+            prefs.putUInt("cog", (int)COG);
+            prefs.end();                                    
           }
           else if (strstr(linebuf,"GET /dir1p") > 0){
             COG=COG+1;
             if (COG>360) COG=0;
+            prefs.begin("setup", false);
+            prefs.putUInt("cog", (int)COG);
+            prefs.end();                                    
           }
           else if (strstr(linebuf,"GET /dir10p") > 0){
             COG=COG+10;
             if (COG>360) COG=0+(360-COG);
+            prefs.begin("setup", false);
+            prefs.putUInt("cog", (int)COG);
+            prefs.end();                                    
           }
+          else if (strstr(linebuf,"GET /SETcog") > 0){
+            COG=HDG;
+            prefs.begin("setup", false);
+            prefs.putUInt("cog", (int)COG);
+            prefs.end();                                    
+          }
+
           else if (strstr(linebuf,"GET /apON") > 0){
             AP=true;
           }
@@ -74,27 +93,66 @@
             M_GEAR=GEAR_F;
           }
           else if (strstr(linebuf,"GET /ajaxnav") > 0){ // Запрошен ajax /xmlnav      
-            isAJAX=true;      
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-Type: text/plain");  
-            client.println("Connection: close");
-            client.println();                     
-          
-            client.print("<table width='100%'  style='padding:0 10vw 0 10vw;'>");
-            client.println("<tr style='color:#77bbff;font-size:8vw;' align='center'>");
-            client.print("<td>");
-            client.print(SOG);
-            client.println("</td>");
-            client.print("<td id='hdg'>");
-            client.print(HDG);
-            client.println("<sup>o</sup></td>");
-            client.print("<td>");
-            client.print((int)COG);
-            client.println("<sup>o</sup></td>");
-            client.println("</tr><tr align='center'>");
-            client.print("<td>");
-            client.print(SOGkmh);
-            client.print("km/h</td><td></td><td></td><td></td>");
-            client.println("</tr></table>");
+            isAJAX=true;
+            html_http200ajax(client);
+            html_navdata(client,1,SOG,HDG,COG,GPS_H,GPS_M,GPS_S); //1-вызов из ajax
           }
+          else if (strstr(linebuf,"GET /mode_motor") > 0){
+            MODE=MODE_MOTOR;
+            prefs.begin("setup", false);
+            prefs.putUInt("mode", MODE);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /mode_sail") > 0){
+            MODE=MODE_SAIL;
+            prefs.begin("setup", false);
+            prefs.putUInt("mode", MODE);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /mode_anchor") > 0){
+            MODE=MODE_ANCHOR;
+            prefs.begin("setup", false);
+            prefs.putUInt("mode", MODE);
+            prefs.end();            
+          }
+          else if (strstr(linebuf,"GET /mode_nav") > 0){
+            MODE=MODE_NAV;
+            prefs.begin("setup", false);
+            prefs.putUInt("mode", MODE);
+            prefs.end();           
+          }
+          else if (strstr(linebuf,"GET /mode_setup") > 0){
+            MODE=MODE_SETUP;
+            prefs.begin("setup", false);
+            prefs.putUInt("mode", MODE);
+            prefs.end();            
+          }
+          else if (strstr(linebuf,"GET /mode_ota") > 0){
+            MODE=MODE_OTA;
+          }
+          else if (strstr(linebuf,"GET /zoom10") > 0){
+            ZOOM=10;
+            prefs.begin("setup", false);
+            prefs.putUInt("zoom", ZOOM);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /zoom13") > 0){
+            ZOOM=13;
+            prefs.begin("setup", false);
+            prefs.putUInt("zoom", ZOOM);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /zoom15") > 0){
+            ZOOM=15;
+            prefs.begin("setup", false);
+            prefs.putUInt("zoom", ZOOM);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /zoom20") > 0){
+            ZOOM=20;
+            prefs.begin("setup", false);
+            prefs.putUInt("zoom", ZOOM);
+            prefs.end();
+          }
+          
 #endif
