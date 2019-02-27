@@ -1,16 +1,22 @@
+/* v2.01
+GPS и компас вынесены на nano
+WS обработка связи websocket
 
+---
+https://github.com/Links2004/arduinoWebSockets
+*/
 #include <Wire.h>
 #include <WiFi.h>
 #include <HardwareSerial.h>
-#include "SSD1306.h"
-#include <Preferences.h>
-#include <ESPmDNS.h>    //OTA
-#include <WiFiUdp.h>    //OTA
-#include <ArduinoOTA.h> //OTA
-#include "i2cdev.h"
-#include "TinyGPSplus.h"
-#include "ESP32_Servo.h"
+#include "SSD1306.h"          // OLED display
+#include <Preferences.h>      // EEPROM
+#include <WebSocketsServer.h> // WebSocket
+#include <ESPmDNS.h>          // OTA update
+#include <WiFiUdp.h>          // OTA update
+#include <ArduinoOTA.h>       // OTA update
+#include "ESP32_Servo.h"      // Servo PWM motor
 #include "html.h"
+#include "modbusrtu.h"
 
 #define AccelerateMotorPin  27  //ШИМ мотора управления акселератором (ESP32: 0(used by on-board button),2,4,5(used by on-board LED),12-19,21-23,25-27,32-33)
   
@@ -26,6 +32,8 @@
 #define MODE_SETUP    9
 #define MODE_OTA      99
 
+#define T_MS_NANO     500   //ms
+
 Preferences prefs;  //EEPROM объект
 
 int ZOOM = 10;
@@ -38,48 +46,61 @@ char *OTApassword = "rulezzzz";  // Пароль для подключения
 
 SSD1306  display(0x3c, 4, 15); //OLED - GPIO4-SDA, 15-SCL, 16-RST
 WiFiServer server(80);
-i2cdev Compass;
-HardwareSerial SerialGPS(2);
-TinyGPSPlus gps_parser;
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+HardwareSerial SerialNano(2);
 Servo servoAccelerate;
 
 char linebuf[80];
 int charcount = 0;
 
-int WifiClientsCount = 0;     //Количество подключенных клиентов wifi
+int WifiClientsCount = 0; //Количество подключенных клиентов wifi
 
 int MODE;                 //Текущий режим работы
 
-float SOG, SOGkmh;        //Speed over ground (Kn)
-float HDG;                //Heading
-float COG;                //Course over ground
+float SOG;
+int SOGkmh;        //Speed over ground (Kn)
+int HDG;                //Heading
+int COG;                //Course over ground
 
 int M_THROTTLE = 0;       //Motor throttle (0-100%)
 int M_GEAR;               //Motor gear
 
-bool AP;                 //Autopilot Heading
+bool AP;                  //Autopilot Heading
+
+modbusrtu devModbus;
+char SerialNanoIn[64]; //буфер приема 
+byte SerialNanoInLen; //заполнение буфера
+long SerialNanoInMillis;
 
 int GPS_H;
 int GPS_M;
 int GPS_S;
-double GPS_LAT, GPS_LNG;
-double GPS_ALT;
-double GPS_SPD;
-double GPS_HDG;
+int GPS_DY;
+int GPS_MN;
+int GPS_YR;
+int GPS_ALT;
+
+float GPS_LAT, GPS_LNG;
+float GPS_SPD;
+float GPS_HDG;
 
 long ms_update;
-long ms_compass;
+long ms_nano;
 long ms_wifi;
 long ms_btn0;
 
 bool isAJAX = false; //Этот ответ сервера - AJAX-ответ
 
 #include "ico_array.h";
+
 #include "display_content.h";
+
+#include "websocket_event.h";
 
 void setup() {
   Serial.begin(115200);
-  SerialGPS.begin(9600, SERIAL_8N1, 5, 17); // было 4,15
+  SerialNano.begin(9600, SERIAL_8N1, 5, 17); // BAUD,PARITY,RX,TX
 
   prefs.begin("setup", false); //инициализация non-voltage storage
   MODE = prefs.getUInt("mode", 0);
@@ -93,9 +114,7 @@ void setup() {
   pinMode(14, INPUT);       //GPS PPS signal
 
   servoAccelerate.attach(AccelerateMotorPin, 1000, 2000); //for MG995 large servo, use 1000us and 2000us
-  
-  Compass.compassBegin();
-  
+    
   digitalWrite(16, LOW); delay(50); digitalWrite(16, HIGH);    // set GPIO16 low to reset OLED HIGH to running OLED
   display.init();
   display.flipScreenVertically();
@@ -130,11 +149,16 @@ void setup() {
   display.display();
 
   WiFi.softAP(ssid, password);
+  
   server.begin();
+
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+
   delay(1000);
 
   //MODE = MODE_WIFI;
-  ms_update = ms_compass = ms_wifi = millis();
+  ms_update = ms_wifi = ms_nano = millis();
 }
 
 
@@ -150,16 +174,21 @@ void loop() {
   
   servoAccelerate.write(map(M_THROTTLE, 0, 100, 0, 180));
 
-  if (millis() - ms_update > 3000 && millis() - ms_compass > 300) {
+  if (millis() - ms_update > 3000) {
     if (MODE == MODE_WIFI) display_WIFI();
     if (MODE == MODE_SAIL||MODE == MODE_MOTOR) display_NAV();
     ms_update = millis();
   }
 
-  if (millis() - ms_compass > 1000) {
-    HDG = Compass.getHeading();
-    ms_compass = millis();
+  if (millis() - ms_nano > T_MS_NANO) {
+    devModbus.make(01, 4, 0, 16);
+    SerialNano.write(devModbus.packetout, devModbus.packetout_len);
+    ms_nano = millis();
   }
+//  if (millis() - ms_compass > 1000) {
+//    HDG = Compass.getHeading();
+//    ms_compass = millis();
+//  }
 
   if (digitalRead(0) == HIGH) ms_btn0 = millis();
 
@@ -168,6 +197,8 @@ void loop() {
   if (millis() - ms_btn0 > 2000) MODE = MODE_OTA;
 
   //if (millis() - ms_compass > 500){
+    webSocket.loop();
+
     WiFiClient client = server.available();
     if (client) {
       WifiClientsCount++;
@@ -209,41 +240,40 @@ void loop() {
   //  ms_wifi = millis();
   //} //ms_wifi or ms_compass>500
 
-  while (SerialGPS.available() > 0) {
-    char temp = SerialGPS.read();
-    gps_parser.encode(temp);
-  }
+  while (SerialNano.available() > 0) {
+    char SerialChar = (char)SerialNano.read();
+    devModbus.packet[devModbus.packet_length] = SerialChar;
+    devModbus.packet_length++;
 
-  if(gps_parser.time.isValid()) {
-      GPS_H = gps_parser.time.hour();
-      GPS_M = gps_parser.time.minute();
-      GPS_S = gps_parser.time.second();
+    SerialNanoInMillis = millis();
   }
+  
+  if (devModbus.packet_length > 0 && (millis() - SerialNanoInMillis > 100)) {
+    if (devModbus.ispacket()) {
+      HDG = devModbus.getint(0);
+      GPS_HDG = devModbus.getint(2);
+      SOGkmh = devModbus.getint(4);
+      SOG = devModbus.getfloat(6);
+      GPS_LAT = devModbus.getfloat(10);
+      GPS_LNG = devModbus.getfloat(14);
+      GPS_ALT = devModbus.getint(18);
+      GPS_H = devModbus.getint(20);
+      GPS_M = devModbus.getint(22);
+      GPS_S = devModbus.getint(24);
+      GPS_DY = devModbus.getint(26);
+      GPS_MN = devModbus.getint(28);
+      GPS_YR = devModbus.getint(30);
+         //for (int q = 0; q < devModbus.packet_length; q++) { //вывод принятого пакета на консоль
+         //Serial.print((byte)devModbus.packet[q], HEX); Serial.print(" ");
+         //} Serial.println(" ");
+    }
+    devModbus.packet_length=0;
+  } 
+  
 
-  /*
-    if(gps_parser.time.isValid()) {
-        gps_h = gps_parser.time.hour();
-        gps_m = gps_parser.time.minute();
-        gps_s = gps_parser.time.second();
-    }
-    if(gps_parser.location.isValid()) {
-        gps_lat = gps_parser.location.lat();
-        gps_lng = gps_parser.location.lng();
-    }
-    if(gps_parser.altitude.isValid()) gps_alt = gps_parser.altitude.meters();
-    if(gps_parser.speed.isValid()) gps_spd = gps_parser.speed.kmph();
-    if(gps_parser.course.isValid()) gps_spd = gps_parser.course.deg();
-  */
 } //loop
 
 String twoDigits(int x) {
   if (x < 10) return "0" + String(x);
   else return String(x);
 }
-
-/*
- * - при опросе компаса и обновлении дисплея происходит конфликт i2c и зависают показания компаса
- * 
- * 
- * 
- */
