@@ -1,4 +1,4 @@
-/* v2.01
+/* v2.02
 GPS и компас вынесены на nano
 WS обработка связи websocket
 
@@ -111,7 +111,6 @@ void setup() {
   pinMode(0, INPUT);        //build-in btn
   pinMode(25, OUTPUT);      //bulid-in led
   pinMode(16, OUTPUT);      //RST
-  pinMode(14, INPUT);       //GPS PPS signal
 
   servoAccelerate.attach(AccelerateMotorPin, 1000, 2000); //for MG995 large servo, use 1000us and 2000us
     
@@ -148,7 +147,7 @@ void setup() {
   display.drawString(1, 0, "YachtNavigation");
   display.display();
 
-  WiFi.softAP(ssid, password);
+  //WiFi.softAP(ssid, password);
   
   server.begin();
 
