@@ -1,7 +1,7 @@
-/* v2.02
+/* v2.03
 GPS и компас вынесены на nano
 WS обработка связи websocket
-
+NMEA класс создания сообщений
 ---
 https://github.com/Links2004/arduinoWebSockets
 */
@@ -15,8 +15,9 @@ https://github.com/Links2004/arduinoWebSockets
 #include <WiFiUdp.h>          // OTA update
 #include <ArduinoOTA.h>       // OTA update
 #include "ESP32_Servo.h"      // Servo PWM motor
-#include "html.h"
-#include "modbusrtu.h"
+#include "html.h"             // Содержимое web интерфейса
+#include "modbusrtu.h"        // Протокол ModbusRTU
+#include "nmea.h"             // Кодировщик NMEA
 
 #define AccelerateMotorPin  27  //ШИМ мотора управления акселератором (ESP32: 0(used by on-board button),2,4,5(used by on-board LED),12-19,21-23,25-27,32-33)
   
@@ -73,6 +74,7 @@ char SerialNanoIn[64]; //буфер приема
 byte SerialNanoInLen; //заполнение буфера
 long SerialNanoInMillis;
 
+nmea wsNMEA;    //nmea кодировщий для отправки по WebSocket
 int GPS_H;
 int GPS_M;
 int GPS_S;
@@ -147,7 +149,7 @@ void setup() {
   display.drawString(1, 0, "YachtNavigation");
   display.display();
 
-  //WiFi.softAP(ssid, password);
+  WiFi.softAP(ssid, password);
   
   server.begin();
 

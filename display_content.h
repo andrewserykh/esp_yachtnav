@@ -22,9 +22,13 @@ void display_WIFI(){
   display.drawString(9,0,ssid);
   display.drawXbm(0, 2+10, 8, 8, icoPassword);
   display.drawString(9,10,password);
-  display.drawXbm(0, 2+10+10, 8, 8, icoClient);
-  display.drawString(9,10+10,String(WifiClientsCount));
-  display.drawString(0,10+10+10,"UTC "+String(GPS_H)+":"+String(GPS_M)+":"+String(GPS_S) );
+  display.drawXbm(0, 2*10+2, 8, 8, icoClient);
+  display.drawString(9,2*10,String(WifiClientsCount));
+  display.drawString(0,3*10,"UTC "+String(GPS_H)+":"+String(GPS_M)+":"+String(GPS_S) );
+
+  wsNMEA.GPZDA (GPS_H,GPS_M,GPS_S,GPS_DY,GPS_MN,GPS_YR);
+  display.drawStringMaxWidth(0, 4*10, 128,wsNMEA.message);
+  
   display.display();
 }
 
