@@ -5,6 +5,26 @@
 #define NMEA_MAX_LENGTH 70
 
 
+int nmea::parseCount (){
+  //01234567890123456789012
+  //$PWPEQ,ZDA,GGA,POVER*30
+  int count=0;
+  String temp;
+
+  if (message.indexOf(',') < 0) return (-1); 
+
+  temp = message;
+  
+  while ( temp.indexOf(',') > 0 ){
+
+      temp = temp.substring( temp.indexOf(','), (temp.length() - temp.indexOf(',')) ); 
+      count ++;
+   
+  }
+
+  return count;
+}
+
 bool nmea::GPZDA (int hour,int minute,int second,int day,int month,int year){
   //$GPZDA, hhmmss.s, xx, xx, xxxx, xx, xx  *hh <CR><LF> 
   
@@ -20,7 +40,7 @@ bool nmea::GPZDA (int hour,int minute,int second,int day,int month,int year){
   message = message + _zerohead(year);
   message = message + ",00,00*";
   message = message + String(_crc (message),HEX);
-  message = message + "\n";
+  message = message + NMEA_END_CHAR_1;
   
   return (true);
 }

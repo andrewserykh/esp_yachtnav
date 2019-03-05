@@ -14,10 +14,12 @@
 class nmea
 {
   public:
-    byte packet[128];   //принятый пакет (макс 96 байт)
-    int packet_length;  //длина принятого пакета
-    String message;     //буфер сообщения nmea
-
+    String message;     //буфер приема сообщения nmea
+    bool isQuery;         //принятый пакет является запросом?   
+ 
+    int parseCount();             //количество запросов в сообщении
+    bool parseData(int number);   //разбор входящего пакета
+    //функции отправки
     bool GPZDA (int hour,int minute,int second,int day,int month,int year); //создание сообщения Время и дата $GPZDA, hhmmss.s, xx, xx, xxxx, xx, xx  *hh <CR><LF> 
   private:
     int _crc (String message);   //расчет контрольной суммы

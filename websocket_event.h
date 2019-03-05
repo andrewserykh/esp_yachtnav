@@ -20,25 +20,36 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         case WStype_CONNECTED:
             {
                 IPAddress ip = webSocket.remoteIP(num);
-                //Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+                //num, ip[0], ip[1], ip[2], ip[3], payload
 
         // send message to client
         webSocket.sendTXT(num, "Connected");
             }
             break;
         case WStype_TEXT:
-            //Serial.printf("[%u] get Text: %s\n", num, payload);
+             {              
+              char temp_chars[length+1];
+              memcpy(temp_chars,payload,length+1);              
+              nmea wsReciever;
+              wsReciever.message = String (temp_chars);
 
+              webSocket.sendTXT( num, wsReciever.message );
+
+              String temp(wsReciever.parseCount());
+              
+              webSocket.sendTXT( num, temp );
+             }
+        
             // send message to client
-            webSocket.sendTXT(num, "direct message here from esp32");
+            //webSocket.sendTXT(num, "direct message here from esp32");
 
             // send data to all connected clients
-            webSocket.broadcastTXT("broadcast message here from esp32");
+            //webSocket.broadcastTXT("$PWPEQ,ZDA,GGA,POVER*30");
+            
             break;
         case WStype_BIN:
             //Serial.printf("[%u] get binary length: %u\n", num, length);
             //hexdump(payload, length);
-
             // send message to client
             // webSocket.sendBIN(num, payload, length);
             break;

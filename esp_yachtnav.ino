@@ -74,7 +74,7 @@ char SerialNanoIn[64]; //буфер приема
 byte SerialNanoInLen; //заполнение буфера
 long SerialNanoInMillis;
 
-nmea wsNMEA;    //nmea кодировщий для отправки по WebSocket
+nmea wsSender;    //nmea кодировщик для отправки по WebSocket
 int GPS_H;
 int GPS_M;
 int GPS_S;
