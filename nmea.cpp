@@ -4,24 +4,50 @@
 #define NMEA_END_CHAR_1 '\n'
 #define NMEA_MAX_LENGTH 70
 
-int nmea::parseCount (){
+uint8_t nmea::queryCount (){
   //01234567890123456789012
   //$PWPEQ,ZDA,GGA,POVER*30
-  int count=0;
+  uint8_t count=0;
   String temp;
 
-  if (message.indexOf(',') < 0) return (-1); 
+  temp = message.substring(0, message.indexOf(",")); //выделяем заголовок
+  if (temp.indexOf('Q') < 0) count = 0; //если нет символа Q - запрос, то выход
 
-  temp = message.substring( 1, message.indexOf('*') );
-  
+  if (message.indexOf(',') < 0) return (0); //если нет символа "," то нет запросов
+
+  temp = message.substring( 1, message.indexOf('*') ); //убираем * в конце пакета
+
   while ( temp.indexOf(',') > 0 ){
-
-      temp = temp.substring( temp.indexOf(','), (temp.length() - temp.indexOf(',')) ); 
-      count ++;
-   
+      temp = temp.substring( temp.indexOf(',')+1, temp.length() ); 
+      count ++;   
   }
 
   return count;
+}
+
+String nmea::query(uint8_t number){
+  String res = "";
+
+  if (number > queryCount()) return res;
+
+  String temp = message.substring( 1, message.indexOf('*') ); //убираем * в конце пакета
+
+  uint8_t count = 0;
+
+  while ( temp.indexOf(',') > 0 ){
+      temp = temp.substring( temp.indexOf(',')+1, temp.length() );
+
+      if (number == count) {
+        if (temp.indexOf(',')!=-1) { res = temp.substring(0, temp.indexOf(',')); }
+        else { res = temp; }
+        return res;
+      }
+      
+      count ++;   
+  }
+  
+  
+  return res;
 }
 
 bool nmea::GPZDA (int hour,int minute,int second,int day,int month,int year){
@@ -51,16 +77,29 @@ String nmea::_zerohead (int number){
   return value;
 }
 
-int nmea::_crc( String message )
+bool nmea::crcValid (){
+  String temp = message.substring( 1, message.indexOf('*') ); //убираем * в конце пакета
+  String tcrc = String(_crc (temp),HEX);
+  String scrc = message.substring( message.length()-2, message.length() );
+
+  if ( tcrc.equalsIgnoreCase(scrc) ) {
+    return true;
+  } else {
+    return false; 
+  }
+
+}
+
+int nmea::_crc( String msg )
 {
     char Character;
     int Checksum = 0;
 
 
     //foreach(char Character in sentence)
-    for (int i=0;i<message.length();i++)
+    for (int i=0;i<msg.length();i++)
     {
-        Character = message[i];
+        Character = msg[i];
         switch(Character)
         {
             case '$':
@@ -68,7 +107,7 @@ int nmea::_crc( String message )
                 break;
             case '*':
                 // Stop processing before the asterisk
-                i = message.length();
+                i = msg.length();
                 continue;
             default:
                 // Is this the first value for the checksum?
