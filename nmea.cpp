@@ -4,7 +4,6 @@
 #define NMEA_END_CHAR_1 '\n'
 #define NMEA_MAX_LENGTH 70
 
-
 int nmea::parseCount (){
   //01234567890123456789012
   //$PWPEQ,ZDA,GGA,POVER*30
@@ -13,7 +12,7 @@ int nmea::parseCount (){
 
   if (message.indexOf(',') < 0) return (-1); 
 
-  temp = message;
+  temp = message.substring( 1, message.indexOf('*') );
   
   while ( temp.indexOf(',') > 0 ){
 
