@@ -23,27 +23,23 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
                 //num, ip[0], ip[1], ip[2], ip[3], payload
 
         // send message to client
-        webSocket.sendTXT(num, "Connected");
+        //webSocket.sendTXT(num, "Connected");
             }
             break;
         case WStype_TEXT:
              {              
-              char temp_chars[length+1];
-              memcpy(temp_chars,payload,length+1);              
-              nmea wsReciever;
-              wsReciever.message = String (temp_chars);
+              char chars_in[length+1];
+              memcpy(chars_in,payload,length+1);
+              String str_in = String(chars_in);
 
-              webSocket.sendTXT( num, wsReciever.message );
-
-              String temp(wsReciever.parseCount());
+              if ( str_in.equalsIgnoreCase("get eng") ) { //выдать текущие параметры двигателя
+                String msg="\"eng\":{\"rpm\":1500,\"err\",0}";
+                webSocket.sendTXT(num,msg);
+              }
               
-              webSocket.sendTXT( num, temp );
-             }
+             } //case
         
-            // send message to client
             //webSocket.sendTXT(num, "direct message here from esp32");
-
-            // send data to all connected clients
             //webSocket.broadcastTXT("$PWPEQ,ZDA,GGA,POVER*30");
             
             break;

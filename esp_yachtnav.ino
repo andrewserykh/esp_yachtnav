@@ -17,7 +17,6 @@ https://github.com/Links2004/arduinoWebSockets
 #include "ESP32_Servo.h"      // Servo PWM motor
 #include "html.h"             // Содержимое web интерфейса
 #include "modbusrtu.h"        // Протокол ModbusRTU
-#include "nmea.h"             // Кодировщик NMEA
 
 #define AccelerateMotorPin  27  //ШИМ мотора управления акселератором (ESP32: 0(used by on-board button),2,4,5(used by on-board LED),12-19,21-23,25-27,32-33)
   
@@ -74,7 +73,6 @@ char SerialNanoIn[64]; //буфер приема
 byte SerialNanoInLen; //заполнение буфера
 long SerialNanoInMillis;
 
-nmea wsSender;    //nmea кодировщик для отправки по WebSocket
 int GPS_H;
 int GPS_M;
 int GPS_S;
@@ -197,7 +195,6 @@ void loop() {
   if (millis() - ms_btn0 > 1000 && MODE != MODE_WIFI) MODE = MODE_WIFI;
   if (millis() - ms_btn0 > 2000) MODE = MODE_OTA;
 
-  //if (millis() - ms_compass > 500){
     webSocket.loop();
 
     WiFiClient client = server.available();
@@ -239,7 +236,6 @@ void loop() {
       WifiClientsCount--;
     }
   //  ms_wifi = millis();
-  //} //ms_wifi or ms_compass>500
 
   while (SerialNano.available() > 0) {
     char SerialChar = (char)SerialNano.read();
