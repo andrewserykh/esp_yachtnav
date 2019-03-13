@@ -33,14 +33,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
               String str_in = String(chars_in);
 
               if ( str_in.equalsIgnoreCase("get eng") ) { //выдать текущие параметры двигателя
-                String msg="\"eng\":{\"rpm\":1500,\"err\",0}";
+                String msg="{\"eng\":{\"rpm\":"+String(tempCnt)+",\"err\":0}}";
                 webSocket.sendTXT(num,msg);
               }
               
              } //case
         
             //webSocket.sendTXT(num, "direct message here from esp32");
-            //webSocket.broadcastTXT("$PWPEQ,ZDA,GGA,POVER*30");
+            //webSocket.broadcastTXT("Broadcast debug message");
             
             break;
         case WStype_BIN:

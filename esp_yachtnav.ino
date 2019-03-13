@@ -92,6 +92,9 @@ long ms_btn0;
 
 bool isAJAX = false; //Этот ответ сервера - AJAX-ответ
 
+//временные переменные - удалить:
+int tempCnt=0;
+
 #include "ico_array.h";
 
 #include "display_content.h";
