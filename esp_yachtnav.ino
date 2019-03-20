@@ -1,7 +1,9 @@
-/* v2.03
+/* v2.04
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
+
+В процессе создания Якорный аларм
 ---
 https://github.com/Links2004/arduinoWebSockets
 */
@@ -17,6 +19,7 @@ https://github.com/Links2004/arduinoWebSockets
 #include "ESP32_Servo.h"      // Servo PWM motor
 #include "html.h"             // Содержимое web интерфейса
 #include "modbusrtu.h"        // Протокол ModbusRTU
+#include "gpsnav.h"           // Класс GPS навигации
 
 #define AccelerateMotorPin  27  //ШИМ мотора управления акселератором (ESP32: 0(used by on-board button),2,4,5(used by on-board LED),12-19,21-23,25-27,32-33)
   
@@ -32,73 +35,45 @@ https://github.com/Links2004/arduinoWebSockets
 #define MODE_SETUP    9
 #define MODE_OTA      99
 
-#define T_MS_NANO     500   //ms
+#define T_MS_NANO     500   //ms интервал опроса периферии
 
 Preferences prefs;  //EEPROM объект
 
 int ZOOM = 10;
-
-char *ssid = "CalypsoYacht";  // Название сети WiFi
-char *password = "rulezzzz";  // Пароль для подключения
-
-char *OTAssid = "nextflight";  // Название сети WiFi
-char *OTApassword = "rulezzzz";  // Пароль для подключения
-
-SSD1306  display(0x3c, 4, 15); //OLED - GPIO4-SDA, 15-SCL, 16-RST
+char *ssid = "CalypsoYacht";    // Название сети WiFi
+char *password = "rulezzzz";    // Пароль для подключения
+char *OTAssid = "nextflight";   // Название сети WiFi
+char *OTApassword = "rulezzzz"; // Пароль для подключения
+SSD1306  display(0x3c, 4, 15);  //OLED - GPIO4-SDA, 15-SCL, 16-RST
 WiFiServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
-
 HardwareSerial SerialNano(2);
 Servo servoAccelerate;
-
 char linebuf[80];
 int charcount = 0;
-
 int WifiClientsCount = 0; //Количество подключенных клиентов wifi
-
 int MODE;                 //Текущий режим работы
-
 float SOG;
-int SOGkmh;        //Speed over ground (Kn)
-int HDG;                //Heading
-int COG;                //Course over ground
-
+int SOGkmh;               //Speed over ground (Kn)
+int HDG;                  //Heading
+int COG;                  //Course over ground
 int M_THROTTLE = 0;       //Motor throttle (0-100%)
 int M_GEAR;               //Motor gear
-
 bool AP;                  //Autopilot Heading
-
+bool ANCHOR;              //Якорь опущен
 modbusrtu devModbus;
-char SerialNanoIn[64]; //буфер приема 
-byte SerialNanoInLen; //заполнение буфера
+char SerialNanoIn[64];    //буфер приема 
+byte SerialNanoInLen;     //заполнение буфера
 long SerialNanoInMillis;
-
-int GPS_H;
-int GPS_M;
-int GPS_S;
-int GPS_DY;
-int GPS_MN;
-int GPS_YR;
-int GPS_ALT;
-
-float GPS_LAT, GPS_LNG;
-float GPS_SPD;
-float GPS_HDG;
-
-long ms_update;
-long ms_nano;
-long ms_wifi;
-long ms_btn0;
-
-bool isAJAX = false; //Этот ответ сервера - AJAX-ответ
-
+gpsnav  GPS;
+gpspoi  PoiAnchor;
+long ms_update, ms_nano, ms_wifi, ms_btn0;
+bool isAJAX = false;      //Этот ответ сервера - AJAX-ответ
 //временные переменные - удалить:
 int tempCnt=0;
 
 #include "ico_array.h";
-
 #include "display_content.h";
-
 #include "websocket_event.h";
 
 void setup() {
@@ -109,6 +84,7 @@ void setup() {
   MODE = prefs.getUInt("mode", 0);
   COG = (float)prefs.getUInt("cog", 0);
   ZOOM = prefs.getUInt("zoom", 10);
+  ANCHOR = prefs.getBool("anchor",false);
   prefs.end();
 
   pinMode(0, INPUT);        //build-in btn
@@ -251,21 +227,21 @@ void loop() {
   if (devModbus.packet_length > 0 && (millis() - SerialNanoInMillis > 100)) {
     if (devModbus.ispacket()) {
       HDG = devModbus.getint(0);
-      GPS_HDG = devModbus.getint(2);
+      GPS.hdg = devModbus.getint(2);      
       SOGkmh = devModbus.getint(4);
       SOG = devModbus.getfloat(6);
-      GPS_LAT = devModbus.getfloat(10);
-      GPS_LNG = devModbus.getfloat(14);
-      GPS_ALT = devModbus.getint(18);
-      GPS_H = devModbus.getint(20);
-      GPS_M = devModbus.getint(22);
-      GPS_S = devModbus.getint(24);
-      GPS_DY = devModbus.getint(26);
-      GPS_MN = devModbus.getint(28);
-      GPS_YR = devModbus.getint(30);
-         //for (int q = 0; q < devModbus.packet_length; q++) { //вывод принятого пакета на консоль
-         //Serial.print((byte)devModbus.packet[q], HEX); Serial.print(" ");
-         //} Serial.println(" ");
+      GPS.lat = devModbus.getfloat(10);
+      GPS.lng = devModbus.getfloat(14);
+      GPS.alt = devModbus.getint(18);
+      GPS.hour = devModbus.getint(20);
+      GPS.minute = devModbus.getint(22);
+      GPS.second = devModbus.getint(24);
+      GPS.day = devModbus.getint(26);
+      GPS.month = devModbus.getint(28);
+      GPS.year = devModbus.getint(30);
+       //for (int q = 0; q < devModbus.packet_length; q++) { //вывод принятого пакета на консоль
+       //Serial.print((byte)devModbus.packet[q], HEX); Serial.print(" ");
+       //} Serial.println(" ");
     }
     devModbus.packet_length=0;
   } 

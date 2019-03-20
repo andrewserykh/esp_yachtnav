@@ -76,7 +76,7 @@ void html_menu (WiFiClient client){
   client.println("</div>");
 }
 
-void html_navdata (WiFiClient client, bool refresh, float SOG, float HDG, float COG,int GPS_H,int GPS_M,int GPS_S){ // refresh=1, если вызов первоначальный, а не из ajax обновления
+void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG,int GPS_H,int GPS_M,int GPS_S){ // refresh=1, если вызов первоначальный, а не из ajax обновления
   if (!refresh) client.println("<div id='navdata'>");
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);margin-top: -10px;'>");
   client.print("<div class='t1'>");
@@ -229,6 +229,29 @@ void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE){
   if (M_THROTTLE==100) {client.print(on);} else {client.print(off);}
   client.print("'>F</a>");
   client.println("</div>");
+}
+
+void html_anchor (WiFiClient client, bool ANCHOR, float GPS_LAT1, float GPS_LNG1){
+  const String on = "on";
+  const String off = "off";
+  client.println("<div class='t0' style='margin-top: 0px;'>ANCHOR</div>"); //-20px
+  client.print("<div class='t3'>");
+  if (ANCHOR) { client.print("ANCHOR ALARM ON!"); } else { client.print("OFF"); }
+  client.println("</div>");  
+  client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(3,2em);'>");
+  client.print("<a href='anchorON' class='s ");
+  if (!ANCHOR) {client.print(on);} else {client.print(off);}
+  client.println("' >SET ANCHOR</a>");
+  client.print("<a href='anchorOFF' class='s ");
+  if (ANCHOR) {client.print(on);} else {client.print(off);} 
+  client.println("' >CANCEL</a>");
+  client.println("</div>");
+    client.println("<div class='t0' style='margin-top: 0px;'>DRIFT</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='drift1m' class='s'>-1</a>");
+  client.println("<a href='drift1p' class='s'>+1</a>");
+  client.println("</div>");
+
 }
 
 #endif

@@ -95,7 +95,7 @@
           else if (strstr(linebuf,"GET /ajaxnav") > 0){ // Запрошен ajax /xmlnav      
             isAJAX=true;
             html_http200ajax(client);
-            html_navdata(client,1,SOG,HDG,COG,GPS_H,GPS_M,GPS_S); //1-вызов из ajax
+            html_navdata(client,1,MODE,SOG,HDG,COG,GPS.hour,GPS.minute,GPS.second); //1-вызов из ajax
           }
           else if (strstr(linebuf,"GET /mode_motor") > 0){
             MODE=MODE_MOTOR;
@@ -152,6 +152,18 @@
             ZOOM=20;
             prefs.begin("setup", false);
             prefs.putUInt("zoom", ZOOM);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /anchorON") > 0){
+            ANCHOR=true;
+            prefs.begin("setup", false);
+            prefs.putUInt("anchor", ANCHOR);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /anchorOFF") > 0){
+            ANCHOR=false;
+            prefs.begin("setup", false);
+            prefs.putUInt("anchor", ANCHOR);
             prefs.end();
           }
           

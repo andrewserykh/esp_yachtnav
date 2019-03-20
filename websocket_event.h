@@ -34,6 +34,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
               if ( str_in.equalsIgnoreCase("get eng") ) { //выдать текущие параметры двигателя
                 String msg="{\"eng\":{\"rpm\":"+String(tempCnt)+",\"err\":0}}";
+                tempCnt++;
+                if (tempCnt>70) tempCnt = 0;
                 webSocket.sendTXT(num,msg);
               }
               

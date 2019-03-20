@@ -24,7 +24,7 @@ void display_WIFI(){
   display.drawString(9,10,password);
   display.drawXbm(0, 2*10+2, 8, 8, icoClient);
   display.drawString(9,2*10,String(WifiClientsCount));
-  display.drawString(0,3*10,"UTC "+String(GPS_H)+":"+String(GPS_M)+":"+String(GPS_S) );
+  display.drawString(0,3*10,"UTC "+String(GPS.hour)+":"+String(GPS.minute)+":"+String(GPS.second) );
   //wsSender.GPZDA (GPS_H,GPS_M,GPS_S,GPS_DY,GPS_MN,GPS_YR);
   //display.drawStringMaxWidth(0, 4*10, 128,wsSender.message);
   display.display();
