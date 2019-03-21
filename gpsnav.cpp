@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "gpsnav.h"
 
-float distance (float fA, float sA, float fB, float sB) {
+float gpsnav::distance (float fA, float sA, float fB, float sB) {
   float distance_between=0;
   float lat1 = fA * 3.1415926 / 180;
   float lat2 = fB * 3.1415926 / 180;

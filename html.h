@@ -76,7 +76,7 @@ void html_menu (WiFiClient client){
   client.println("</div>");
 }
 
-void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG,int GPS_H,int GPS_M,int GPS_S){ // refresh=1, если вызов первоначальный, а не из ajax обновления
+void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG,int GPS_H,int GPS_M,int GPS_S, bool ANCHOR, int ANCHOR_DRIFT){ // refresh=1, если вызов первоначальный, а не из ajax обновления
   if (!refresh) client.println("<div id='navdata'>");
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);margin-top: -10px;'>");
   client.print("<div class='t1'>");
@@ -102,7 +102,15 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   client.print(".");
   client.print(GPS_S);
   client.println("</div>");  
-  client.println("</div>");    
+  client.println("</div>");
+
+  if (ANCHOR) {
+    client.print("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);margin-top: -10px;'>");
+    client.print("<div>DRIFT: ");
+    client.print(ANCHOR_DRIFT);
+    client.print(" m</div>");  
+    client.print("</div>");    
+  } //ANCHOR
   if (!refresh) client.println("</div>");
 }
 
@@ -231,12 +239,16 @@ void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE){
   client.println("</div>");
 }
 
-void html_anchor (WiFiClient client, bool ANCHOR, float GPS_LAT1, float GPS_LNG1){
+void html_anchor (WiFiClient client, bool ANCHOR, float GPS_LAT1, float GPS_LNG1,float GPS_LAT2, float GPS_LNG2, int ANCHOR_DRIFT_MAX){
   const String on = "on";
   const String off = "off";
-  client.println("<div class='t0' style='margin-top: 0px;'>ANCHOR</div>"); //-20px
-  client.print("<div class='t3'>");
-  if (ANCHOR) { client.print("ANCHOR ALARM ON!"); } else { client.print("OFF"); }
+  client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(2,2em);'>");
+  if (ANCHOR) {
+    client.print("<svg viewBox='0 0 520 520' width='1.6em' height='1.6em'><path d='m497.9,342.2l-48.8-64.4-63.3,49.8 13.5,16.6 35-28.6-1.8,18.3c-17.9,80.6-86.4,140.2-166.1,145v-290.4h49.8v-20.8h-49.8v-63.5c20-4.8 35.3-23.2 35.3-45.5 0-26-20.8-46.7-45.7-46.7-24.9,0-45.7,20.8-45.7,46.7 0,22.2 15.3,40.7 35.3,45.5v63.5h-49.8v20.8h49.8v290.4c-79.7-4.8-148.2-64.4-166.1-145l-1.3-17.9 34.5,28.3 13.5-16.6-63.3-49.8-48.8,64.4 16.6,12.5 27.3-35.9 1.7,18.3v1c19.8,93.2 102.9,161.8 196.3,161.8s176.5-68.6 196.2-162l2.2-18.7 26.9,35.3 16.6-12.4zm-266.8-283.4c-2.84217e-14-14.5 11.4-26 24.9-26 13.5,0 24.9,11.4 24.9,26 0,14.5-11.4,26-24.9,26-13.5-0.1-24.9-11.5-24.9-26z' fill='#006DF0'/></svg><br>"); 
+    client.print(GPS_LAT2,8); 
+    client.print(" ");
+    client.print(GPS_LNG2,8);
+  } 
   client.println("</div>");  
   client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(3,2em);'>");
   client.print("<a href='anchorON' class='s ");
@@ -246,12 +258,14 @@ void html_anchor (WiFiClient client, bool ANCHOR, float GPS_LAT1, float GPS_LNG1
   if (ANCHOR) {client.print(on);} else {client.print(off);} 
   client.println("' >CANCEL</a>");
   client.println("</div>");
-    client.println("<div class='t0' style='margin-top: 0px;'>DRIFT</div>"); //-20px
-  client.println("<div style='display: grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<div class='t0' style='margin-top: 0px;'>DRIFT</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
   client.println("<a href='drift1m' class='s'>-1</a>");
+  client.print("<div>");
+  client.print(ANCHOR_DRIFT_MAX);
+  client.print(" m</div>");
   client.println("<a href='drift1p' class='s'>+1</a>");
   client.println("</div>");
-
 }
 
 #endif

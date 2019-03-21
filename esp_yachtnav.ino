@@ -61,6 +61,9 @@ int M_THROTTLE = 0;       //Motor throttle (0-100%)
 int M_GEAR;               //Motor gear
 bool AP;                  //Autopilot Heading
 bool ANCHOR;              //Якорь опущен
+int ANCHOR_DRIFT;         //Смещение от точки якорения
+int ANCHOR_DRIFT_MAX;     //Максимальное смещение
+
 modbusrtu devModbus;
 char SerialNanoIn[64];    //буфер приема 
 byte SerialNanoInLen;     //заполнение буфера
@@ -85,6 +88,7 @@ void setup() {
   COG = (float)prefs.getUInt("cog", 0);
   ZOOM = prefs.getUInt("zoom", 10);
   ANCHOR = prefs.getBool("anchor",false);
+  ANCHOR_DRIFT_MAX = prefs.getUInt("drift", 20);
   prefs.end();
 
   pinMode(0, INPUT);        //build-in btn
@@ -239,6 +243,10 @@ void loop() {
       GPS.day = devModbus.getint(26);
       GPS.month = devModbus.getint(28);
       GPS.year = devModbus.getint(30);
+
+      if (ANCHOR){ //если якорь опущен, расчет смещения от точки якорения
+        ANCHOR_DRIFT = GPS.distance(GPS.lat,GPS.lng,PoiAnchor.lat,PoiAnchor.lng);
+      } //anchor
        //for (int q = 0; q < devModbus.packet_length; q++) { //вывод принятого пакета на консоль
        //Serial.print((byte)devModbus.packet[q], HEX); Serial.print(" ");
        //} Serial.println(" ");

@@ -95,7 +95,7 @@
           else if (strstr(linebuf,"GET /ajaxnav") > 0){ // Запрошен ajax /xmlnav      
             isAJAX=true;
             html_http200ajax(client);
-            html_navdata(client,1,MODE,SOG,HDG,COG,GPS.hour,GPS.minute,GPS.second); //1-вызов из ajax
+            html_navdata(client,1,MODE,SOG,HDG,COG,GPS.hour,GPS.minute,GPS.second,ANCHOR,ANCHOR_DRIFT); //1-вызов из ajax
           }
           else if (strstr(linebuf,"GET /mode_motor") > 0){
             MODE=MODE_MOTOR;
@@ -156,6 +156,8 @@
           }
           else if (strstr(linebuf,"GET /anchorON") > 0){
             ANCHOR=true;
+            PoiAnchor.lat = GPS.lat;
+            PoiAnchor.lng = GPS.lng;
             prefs.begin("setup", false);
             prefs.putUInt("anchor", ANCHOR);
             prefs.end();
@@ -166,5 +168,20 @@
             prefs.putUInt("anchor", ANCHOR);
             prefs.end();
           }
+          else if (strstr(linebuf,"GET /drift1m") > 0){
+            ANCHOR_DRIFT_MAX=ANCHOR_DRIFT_MAX-1;
+            if (ANCHOR_DRIFT_MAX<0) ANCHOR_DRIFT_MAX=0;
+            prefs.begin("setup", false);
+            prefs.putUInt("drift", ANCHOR_DRIFT_MAX);
+            prefs.end();
+          } 
+          else if (strstr(linebuf,"GET /drift1p") > 0){
+            ANCHOR_DRIFT_MAX=ANCHOR_DRIFT_MAX+1;
+            prefs.begin("setup", false);
+            prefs.putUInt("drift", ANCHOR_DRIFT_MAX);
+            prefs.end();
+          }
+          
+          
           
 #endif

@@ -34,6 +34,7 @@ class gpsnav
 
 class gpspoi
 {
+  public:
     float lat;
     float lng;
 };
