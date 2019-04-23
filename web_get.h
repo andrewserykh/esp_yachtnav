@@ -95,7 +95,7 @@
           else if (strstr(linebuf,"GET /ajaxnav") > 0){ // Запрошен ajax /xmlnav      
             isAJAX=true;
             html_http200ajax(client);
-            html_navdata(client,1,MODE,SOG,HDG,COG,GPS.hour,GPS.minute,GPS.second,ANCHOR,ANCHOR_DRIFT); //1-вызов из ajax
+            html_navdata(client,1,MODE,SOG,HDG,COG,ANCHOR,ANCHOR_DRIFT,LINKERROR); //1-вызов из ajax
           }
           else if (strstr(linebuf,"GET /mode_motor") > 0){
             MODE=MODE_MOTOR;

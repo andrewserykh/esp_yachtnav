@@ -76,15 +76,15 @@ void html_menu (WiFiClient client){
   client.println("</div>");
 }
 
-void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG,int GPS_H,int GPS_M,int GPS_S, bool ANCHOR, int ANCHOR_DRIFT){ // refresh=1, если вызов первоначальный, а не из ajax обновления
-  if (!refresh) client.println("<div id='navdata'>");
+void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG, bool ANCHOR, int ANCHOR_DRIFT, bool LINKERROR){ // refresh=1, если вызов первоначальный, а не из ajax обновления
+  if (!refresh) client.println("<div id='navdata'>");  
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);margin-top: -10px;'>");
   client.print("<div class='t1'>");
-  client.print((int)SOG);
-  client.println("<sup>kn</sup></div>");
+  if (!LINKERROR) { client.print((int)SOG); client.println("<sup>kn</sup>"); } else { client.print("NO"); }
+  client.print("</div>");
   client.print("<div class='t3'>");
-  client.print((int)HDG);
-  client.println("<sup>o</sup></div>");
+  if (!LINKERROR) { client.print((int)HDG);   client.println("<sup>o</sup>"); } else { client.print("LINK"); }
+  client.print("</div>");
   client.print("<div class='t1'>");
   client.print((int)COG);
   client.println("<sup>o</sup></div>");
@@ -94,16 +94,7 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   client.println("<div class='t0' style='margin:1em;'>HDG</div>");
   client.println("<div class='t0' style='margin:1em;'>COG</div>");
   client.println("</div>");
-  client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(2,0.5em);'>");
-  client.print("<div class='t0' style='margin:1em;'>");
-  client.print(GPS_H);
-  client.print(":");
-  client.print(GPS_M);
-  client.print(".");
-  client.print(GPS_S);
-  client.println("</div>");  
-  client.println("</div>");
-
+  client.println("<br>");
   if (ANCHOR) {
     client.print("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);'>");
     client.print("<div>DRIFT: ");
@@ -114,7 +105,7 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   if (!refresh) client.println("</div>");
 }
 
-void html_setup (WiFiClient client){
+void html_setup (WiFiClient client, bool LINKERROR){
   client.println("<div class='t0'>ZOOM</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(1,2em);'>");
   client.println("<a href='zoom10' class='s'>1.0</a>");
@@ -126,6 +117,7 @@ void html_setup (WiFiClient client){
   client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);'>");
   client.println("<a href='mode_ota' class='s'>OTA UPDATE</a>");
   client.println("</div>");
+  if (LINKERROR)   client.println("<div class='t0' style='color:#ff0000;'>LINK ERROR!!! CHECK WIRE TO NAVIGATION PLC!</div>");
 }
 
 void html_sail (WiFiClient client, bool AP){
@@ -259,5 +251,33 @@ void html_anchor (WiFiClient client, bool ANCHOR, float GPS_LAT1, float GPS_LNG1
   client.println("<a href='drift1p' class='s'>+1</a>");
   client.println("</div>");
 }
+
+void html_nav (WiFiClient client, float GPS_LAT, float GPS_LNG, int GPS_H, int GPS_M, int GPS_S){
+  const String on = "on";
+  const String off = "off"; 
+  client.println("<div style='display: grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,2em);'>");
+  client.println("<div class='t0' style='margin-top: 0px;'>LAT</div>"); //-20px
+  client.println("<div class='t0' style='margin-top: 0px;'>LNG</div>"); //-20px
+  client.print("<div>");
+  client.print(GPS_LAT);
+  client.print("</div>");
+  client.print("<div>");
+  client.print(GPS_LNG);
+  client.print("</div>");
+  client.print("</div>");
+  client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(2,2em);'>");
+  client.println("<div class='t0' style='margin-top: 0px;'>TIME UTC</div>"); //-20px
+  client.print("<div>");
+  if (GPS_H<10) client.print("0");
+  client.print(GPS_H);
+  client.print(":");
+  if (GPS_M<10) client.print("0");
+  client.print(GPS_M);
+  client.print(".");
+  if (GPS_S<10) client.print("0");
+  client.print(GPS_S);
+  client.print("</div>");
+}
+
 
 #endif

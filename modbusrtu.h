@@ -14,20 +14,22 @@
 class modbusrtu
 {
   public:
-    int txdelay; //задержка после отправки пакета
-    byte packet[96]; //принятый пакет (макс 96 байт)
-    int packet_length; //длина принятого пакета
-    byte packetout[64]; //пакет на отправку
-    int packetout_len; //длина пакета на отправку
-    byte search; //хранение адреса пр поиске
-    bool make(byte adr, byte func, int start, int len); //сделать пакет модбас
-    bool ispacket(); //проверяет по crc что пакет верный
-    byte adr(); //получить адрес из пакета
-    byte fn(); //получить номер функции из пакета
-    int length(); //длина данных в пакете
+    bool  online;  //устройство на связи
+    int   error;  //счетчик ошибок связи
+    int   txdelay; //задержка после отправки пакета
+    byte  packet[96]; //принятый пакет (макс 96 байт)
+    int   packet_length; //длина принятого пакета
+    byte  packetout[64]; //пакет на отправку
+    int   packetout_len; //длина пакета на отправку
+    byte  search; //хранение адреса пр поиске
+    bool  make(byte adr, byte func, int start, int len); //сделать пакет модбас
+    bool  ispacket(); //проверяет по crc что пакет верный
+    byte  adr(); //получить адрес из пакета
+    byte  fn(); //получить номер функции из пакета
+    int   length(); //длина данных в пакете
     float getfloat(int start); //получить float величину из пакета
-    int getint(int start); //получить int из пакета
-    int getint_reg(int start); //получить регистр из пакета
+    int   getint(int start); //получить int из пакета
+    int   getint_reg(int start); //получить регистр из пакета
   private:
     unsigned int _crc(byte pkt[], int len);
 };

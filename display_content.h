@@ -32,6 +32,7 @@ void display_WIFI(){
 
 void display_NAV(){
     display.clear();
+    if (!LINKERROR){
     display.setFont(ArialMT_Plain_10);
     display.drawString(0,0,"HDG");
     display.setFont(ArialMT_Plain_24);
@@ -46,7 +47,7 @@ void display_NAV(){
     display.drawString(0,32,"SOG");
     display.setFont(ArialMT_Plain_24);
     display.drawString(0,32+8,String(SOG));
-
+    }
     display.setFont(ArialMT_Plain_10);
     display.drawString(64,32,"THR");
     display.setFont(ArialMT_Plain_24);

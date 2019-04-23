@@ -1,4 +1,4 @@
-/* v2.04
+/* v2.05
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
@@ -42,7 +42,7 @@ Preferences prefs;  //EEPROM объект
 int ZOOM = 10;
 char *ssid = "CalypsoYacht";    // Название сети WiFi
 char *password = "rulezzzz";    // Пароль для подключения
-char *OTAssid = "nextflight";   // Название сети WiFi
+char *OTAssid = "Escobar";      // Название сети WiFi для OTA
 char *OTApassword = "rulezzzz"; // Пароль для подключения
 SSD1306  display(0x3c, 4, 15);  //OLED - GPIO4-SDA, 15-SCL, 16-RST
 WiFiServer server(80);
@@ -63,6 +63,7 @@ bool AP;                  //Autopilot Heading
 bool ANCHOR;              //Якорь опущен
 int ANCHOR_DRIFT;         //Смещение от точки якорения
 int ANCHOR_DRIFT_MAX;     //Максимальное смещение
+bool LINKERROR;           //Нет связи с Arduino-Nano
 
 modbusrtu devModbus;
 char SerialNanoIn[64];    //буфер приема 
@@ -153,7 +154,9 @@ void loop() {
     delay(1000);
     ESP.restart();
   }
-  
+
+//функции обработки управления  
+
   servoAccelerate.write(map(M_THROTTLE, 0, 100, 0, 180));
 
   if (millis() - ms_update > 3000) {
@@ -162,18 +165,17 @@ void loop() {
     ms_update = millis();
   }
 
-  if (millis() - ms_nano > T_MS_NANO) {
+  if (millis() - ms_nano > T_MS_NANO) { //отправка modbus запроса Arduino-Nano
+    if (!devModbus.online) devModbus.error++;
+    LINKERROR=false;
+    if (devModbus.error>10) LINKERROR=true;
     devModbus.make(01, 4, 0, 16);
+    devModbus.online=false;
     SerialNano.write(devModbus.packetout, devModbus.packetout_len);
     ms_nano = millis();
   }
-//  if (millis() - ms_compass > 1000) {
-//    HDG = Compass.getHeading();
-//    ms_compass = millis();
-//  }
 
   if (digitalRead(0) == HIGH) ms_btn0 = millis();
-
   if (millis() - ms_btn0 > 50 && MODE != MODE_MOTOR) MODE = MODE_MOTOR;
   if (millis() - ms_btn0 > 1000 && MODE != MODE_WIFI) MODE = MODE_WIFI;
   if (millis() - ms_btn0 > 2000) MODE = MODE_OTA;
@@ -183,8 +185,6 @@ void loop() {
     WiFiClient client = server.available();
     if (client) {
       WifiClientsCount++;
-      //MODE = MODE_MOTOR;
-      //display_NAV();
       memset(linebuf, 0, sizeof(linebuf));
       charcount = 0;
 
@@ -230,6 +230,8 @@ void loop() {
   
   if (devModbus.packet_length > 0 && (millis() - SerialNanoInMillis > 100)) {
     if (devModbus.ispacket()) {
+      devModbus.online=true;
+      devModbus.error=0;
       HDG = devModbus.getint(0);
       GPS.hdg = devModbus.getint(2);      
       SOGkmh = devModbus.getint(4);

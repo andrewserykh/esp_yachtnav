@@ -17,12 +17,13 @@ html_headstyle(client,ZOOM);
 html_headend(client);
 
 html_bodybegin(client);
-html_navdata(client,0,MODE,SOG,HDG,COG,GPS.hour,GPS.minute,GPS.second,ANCHOR,ANCHOR_DRIFT); //0 - вызов первичный, не из ajax запроса
+html_navdata(client,0,MODE,SOG,HDG,COG,ANCHOR,ANCHOR_DRIFT,LINKERROR); //0 - вызов первичный, не из ajax запроса
 
 if (MODE==MODE_SAIL) html_sail(client,AP);
 if (MODE==MODE_MOTOR) html_motor(client,AP,M_GEAR,M_THROTTLE);
-if (MODE==MODE_SETUP) html_setup(client);
+if (MODE==MODE_SETUP) html_setup(client,LINKERROR);
 if (MODE==MODE_ANCHOR) html_anchor(client,ANCHOR,GPS.lat,GPS.lng, PoiAnchor.lat, PoiAnchor.lng,ANCHOR_DRIFT_MAX);
+if (MODE==MODE_NAV) html_nav(client, GPS.lat, GPS.lng,GPS.hour,GPS.minute,GPS.second);
 
 html_menu(client);
 html_bodyend(client);
