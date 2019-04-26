@@ -1,4 +1,4 @@
-/* v2.10
+/* v2.11
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
@@ -73,7 +73,8 @@ struct {
   long ms_start;          //Время начала движения
 } RUDDER;
 
-bool  LINKERROR;           //Нет связи с Arduino-Nano
+uint8_t LINKERRCOUNT;     //Счетчик ошибок связи
+bool  LINKERROR;          //Нет связи с Arduino-Nano
 
 char SerialNanoIn[64];    //буфер приема 
 byte SerialNanoInLen;     //заполнение буфера
@@ -257,6 +258,8 @@ void loop() {
     prefs.putUInt("rudder", RUDDER.Current);
     prefs.end();
     ms_update = millis();
+    LINKERRCOUNT++;
+    if (LINKERRCOUNT>10) LINKERROR = true;
   }
 
   if (digitalRead(0) == HIGH) ms_btn0 = millis();
@@ -321,6 +324,7 @@ void loop() {
     if (SerialNanoIn[0] == 0x65){ //Проверка заголовка пакета 0x65
       if (sizeof(datanano)>=SerialNanoInLen) for (int i=0; i<SerialNanoInLen; i++) ((byte*)&datanano)[i] = SerialNanoIn[i]; //загрузка структуры данных
       LINKERROR = false;
+      LINKERRCOUNT = 0;
       HDG = datanano.CompassCourse;
       GPS.hdg = datanano.GpsCourse;      
       SOGkmh = datanano.GpsSpeedKmh;
