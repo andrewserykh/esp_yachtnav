@@ -110,7 +110,8 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   if (!refresh) client.println("</div>");
 }
 
-void html_setup (WiFiClient client, bool LINKERROR){
+void html_setup (WiFiClient client, bool LINKERROR,long RUDDER_TMAX){
+  if (LINKERROR)   client.println("<div class='t0' style='color:#ff0000;'>LINK ERROR!!! CHECK WIRE TO NAVIGATION PLC!</div>");  
   client.println("<div class='t0'>ZOOM</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(1,2em);'>");
   client.println("<a href='zoom10' class='s'>1.0</a>");
@@ -122,10 +123,18 @@ void html_setup (WiFiClient client, bool LINKERROR){
   client.println("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);'>");
   client.println("<a href='mode_ota' class='s'>OTA UPDATE</a>");
   client.println("</div>");
-  if (LINKERROR)   client.println("<div class='t0' style='color:#ff0000;'>LINK ERROR!!! CHECK WIRE TO NAVIGATION PLC!</div>");
+  client.println("<div class='t0' style='margin-top: 0px;'>RUDDER 0..100% MOVE TIME</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='rtmax1m' class='s'>-1 s</a>");
+  client.print("<div>");
+  client.print(RUDDER_TMAX/1000);
+  client.print(" s</div>");
+  client.println("<a href='rtmax1p' class='s'>+1 s</a>");
+  client.println("</div>");
+  
 }
 
-void html_sail (WiFiClient client, bool AP){
+void html_sail (WiFiClient client, bool AP,int RUDDER_SET){
   const String on = "on";
   const String off = "off";
   client.println("<div class='t0' style='margin-top: 0px;'>DIRECTION</div>"); //-20px
@@ -149,17 +158,39 @@ void html_sail (WiFiClient client, bool AP){
   client.println("</div>");
   client.println("<div class='t0'>RUDDER</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(1,2em);'>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s on' href='#'>|</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET<10) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud0p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=10 && RUDDER_SET<20) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud1p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=20 && RUDDER_SET<30) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud2p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=30 && RUDDER_SET<40) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud3p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=40 && RUDDER_SET<50) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud4p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=50 && RUDDER_SET<60) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud5p'>|</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=60 && RUDDER_SET<70) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud6p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=70 && RUDDER_SET<80) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud7p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=80 && RUDDER_SET<90) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud8p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=90 && RUDDER_SET<100) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud9p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=100) {client.print(on);} else {client.print(off);}  
+  client.print("' href='rud10p'>&rarr;</a>");
   client.println("</div>");
   client.println("<div class='t0'>PATTERNS</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
@@ -195,20 +226,42 @@ void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE, int RUDDE
   client.print(RUDDER_SET);
   client.println("%</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(1,2em);'>");
-  client.println("<a class='s off' href='rud0p'>&larr;</a>");
-  client.println("<a class='s off' href='rud1p'>&larr;</a>");
-  client.println("<a class='s off' href='rud2p'>&larr;</a>");
-  client.println("<a class='s off' href='rud3p'>&larr;</a>");
-  client.println("<a class='s off' href='rud4p'>&larr;</a>");
-  client.println("<a class='s on' href='rud5p'>|</a>");
-  client.println("<a class='s off' href='rud6p'>&rarr;</a>");
-  client.println("<a class='s off' href='rud7p'>&rarr;</a>");
-  client.println("<a class='s off' href='rud8p'>&rarr;</a>");
-  client.println("<a class='s off' href='rud9p'>&rarr;</a>");
-  client.println("<a class='s off' href='rud10p'>&rarr;</a>");
-  client.println("</div>");
-  client.println("<div class='t0'>GEAR/THROTTLE</div>");
-  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.print("<a class='s ");
+  if (RUDDER_SET<10) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud0p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=10 && RUDDER_SET<20) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud1p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=20 && RUDDER_SET<30) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud2p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=30 && RUDDER_SET<40) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud3p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=40 && RUDDER_SET<50) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud4p'>&larr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=50 && RUDDER_SET<60) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud5p'>|</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=60 && RUDDER_SET<70) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud6p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=70 && RUDDER_SET<80) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud7p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=80 && RUDDER_SET<90) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud8p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=90 && RUDDER_SET<100) {client.print(on);} else {client.print(off);}
+  client.print("' href='rud9p'>&rarr;</a>");
+  client.print("<a class='s ");
+  if (RUDDER_SET>=100) {client.print(on);} else {client.print(off);}  
+  client.print("' href='rud10p'>&rarr;</a>");
+  client.print("</div>");
+  client.print("<div class='t0'>GEAR/THROTTLE</div>");
+  client.print("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
   client.print("<a href='gearR' class='s ");
   if (M_GEAR==2) {client.print(on);} else {client.print(off);}  //2=GEAR_R
   client.println("'>R</a>");

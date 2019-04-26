@@ -126,6 +126,9 @@ void setup() {
   ZOOM = prefs.getUInt("zoom", 10);
   ANCHOR = prefs.getBool("anchor",false);
   ANCHOR_DRIFT_MAX = prefs.getUInt("drift", 20);
+  RUDDER.Current = prefs.getUInt("rudder",0);
+  RUDDER.Set = prefs.getUInt("rudder",0);
+  RUDDER.ms_tmax = prefs.getUInt("rudtmax",10000);
   prefs.end();
 
   pinMode(0,INPUT);       //build-in btn
@@ -177,12 +180,8 @@ void setup() {
   delay(1000);
 
   //MODE = MODE_WIFI;
-
-  RUDDER.ms_tmax = 10000;
-  RUDDER.Current = 0;
-  RUDDER.CurAcc = 0.0;
-  RUDDER.Set = 0;
   
+  RUDDER.CurAcc = (float)RUDDER.Current;
   dataesp.Relay=0x00;
   ms_update = ms_wifi = ms_nano = millis();
   RUDDER.ms_start = millis();
@@ -254,6 +253,9 @@ void loop() {
   if (millis() - ms_update > 3000) {
     if (MODE == MODE_WIFI) display_WIFI();
     if (MODE == MODE_SAIL||MODE == MODE_MOTOR) display_NAV();
+    prefs.begin("setup", false);
+    prefs.putUInt("rudder", RUDDER.Current);
+    prefs.end();
     ms_update = millis();
   }
 
