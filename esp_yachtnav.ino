@@ -35,7 +35,7 @@ https://github.com/Links2004/arduinoWebSockets
 #define MODE_SETUP      9
 #define MODE_OTA        99
 
-#define T_MS_NANO       1000   //ms интервал отправки команд
+#define T_MS_NANO       300   //ms интервал отправки команд
 
 Preferences prefs;  //EEPROM объект
 
@@ -52,18 +52,28 @@ Servo servoAccelerate;
 char linebuf[80];
 int charcount = 0;
 int WifiClientsCount = 0; //Количество подключенных клиентов wifi
-int MODE;                 //Текущий режим работы
-float SOG;
-int SOGkmh;               //Speed over ground (Kn)
-int HDG;                  //Heading
-int COG;                  //Course over ground
-int M_THROTTLE = 0;       //Motor throttle (0-100%)
-int M_GEAR;               //Motor gear
-bool AP;                  //Autopilot Heading
-bool ANCHOR;              //Якорь опущен
-int ANCHOR_DRIFT;         //Смещение от точки якорения
-int ANCHOR_DRIFT_MAX;     //Максимальное смещение
-bool LINKERROR;           //Нет связи с Arduino-Nano
+
+int   MODE;               //Текущий режим работы
+float SOG;                //Speed over ground (knots)
+int   SOGkmh;             //Speed over ground (kmh)
+int   HDG;                //Heading
+int   COG;                //Course over ground
+int   M_THROTTLE = 0;     //Motor throttle (0-100%)
+int   M_GEAR;             //Motor gear
+bool  AP;                 //Autopilot Heading
+bool  ANCHOR;             //Якорь опущен
+int   ANCHOR_DRIFT;       //Смещение от точки якорения
+int   ANCHOR_DRIFT_MAX;   //Максимальное смещение
+
+struct {
+  int Current;            //Текущее положение (0-100%)
+  int Set;                //Заданное положение (0-100%)
+  float CurAcc;           //Текущее положение с высокой точностью
+  long ms_tmax;           //Время хода от 0 до 100
+  long ms_start;          //Время начала движения
+} RUDDER;
+
+bool  LINKERROR;           //Нет связи с Arduino-Nano
 
 char SerialNanoIn[64];    //буфер приема 
 byte SerialNanoInLen;     //заполнение буфера
@@ -104,6 +114,7 @@ int tempCnt=0;
 #include "ico_array.h";
 #include "display_content.h";
 #include "websocket_event.h";
+
 
 void setup() {
   Serial.begin(115200);
@@ -166,12 +177,71 @@ void setup() {
   delay(1000);
 
   //MODE = MODE_WIFI;
+
+  RUDDER.ms_tmax = 10000;
+  RUDDER.Current = 0;
+  RUDDER.CurAcc = 0.0;
+  RUDDER.Set = 0;
+  
   dataesp.Relay=0x00;
   ms_update = ms_wifi = ms_nano = millis();
+  RUDDER.ms_start = millis();
 }
 
 
 void loop() {
+
+//---Блок Управления
+
+  servoAccelerate.write(map(M_THROTTLE, 0, 100, 0, 180)); //Управлением приводом акселератора
+
+  if (RUDDER.Current != RUDDER.Set) { //Заданное положение румпеля не соответсвует текущему
+    if (RUDDER.Current>100) RUDDER.Current = 100;
+    if (RUDDER.Current<0) RUDDER.Current = 0;
+    
+    if (RUDDER.Current < RUDDER.Set){
+      bitWrite ( dataesp.Relay,0,HIGH );
+      bitWrite ( dataesp.Relay,1,LOW );
+      RUDDER.CurAcc = ( ( (millis()-RUDDER.ms_start) * 100.0) / RUDDER.ms_tmax ) + RUDDER.CurAcc;
+      RUDDER.Current = (int) RUDDER.CurAcc;
+      RUDDER.ms_start = millis();
+    }
+    if (RUDDER.Current > RUDDER.Set){
+      bitWrite ( dataesp.Relay,0,LOW );
+      bitWrite ( dataesp.Relay,1,HIGH );
+      RUDDER.CurAcc = RUDDER.CurAcc - ( ((millis()-RUDDER.ms_start) * 100.0) / RUDDER.ms_tmax );
+      RUDDER.Current = (int) RUDDER.CurAcc;
+      RUDDER.ms_start = millis();      
+    }
+  } else { //Заданное положение румпеля не равно текущему
+    RUDDER.ms_start = millis();
+    bitWrite ( dataesp.Relay,0,LOW );
+    bitWrite ( dataesp.Relay,1,LOW ); 
+  }//Заданное положение румпеля не равно текущему
+
+  if (millis() - ms_nano > T_MS_NANO) { //отправка команд на Arduino-Nano
+    dataesp.Header = 0x69;  //Заголовок пакета "E"
+    dataesp.Length = (byte)sizeof(dataesp);
+    for (int i=0; i<sizeof(dataesp); i++) SerialNano.write( ((char*)&dataesp)[i] );
+    ms_nano = millis();
+
+    //Расчет текущего положения по времени
+    /*
+    if (RUDDER.Current < RUDDER.Set){
+      RUDDER.CurAcc = ( ( (millis()-RUDDER.ms_start) * 100.0) / RUDDER.ms_tmax ) + RUDDER.CurAcc;
+      RUDDER.Current = (int) RUDDER.CurAcc;
+      RUDDER.ms_start = millis();
+    }
+    if (RUDDER.Current > RUDDER.Set){
+      RUDDER.CurAcc = RUDDER.CurAcc - ( ((millis()-RUDDER.ms_start) * 100.0) / RUDDER.ms_tmax );
+      RUDDER.Current = (int) RUDDER.CurAcc;
+      RUDDER.ms_start = millis();
+    }
+    */
+    //(millis() - ms_start)
+  }
+
+//---Конец Блока Управления
 
   if (MODE == MODE_OTA) {
     prefs.begin("setup", false); //инициализация non-voltage storage
@@ -181,27 +251,9 @@ void loop() {
     ESP.restart();
   }
 
-//---Блок Управления
-
-  servoAccelerate.write(map(M_THROTTLE, 0, 100, 0, 180)); //Управлением приводом акселератора
-
-  if (millis() - ms_nano > T_MS_NANO) { //отправка команд на Arduino-Nano
-    dataesp.Header = 0x69;  //Заголовок пакета "E"
-    dataesp.Length = (byte)sizeof(dataesp);
-    bitWrite ( dataesp.Relay,0,HIGH );
-    bitWrite ( dataesp.Relay,1,LOW );
-    bitWrite ( dataesp.Relay,2,HIGH );
-    bitWrite ( dataesp.Relay,3,LOW );
-    for (int i=0; i<sizeof(dataesp); i++) SerialNano.write( ((char*)&dataesp)[i] );
-    ms_nano = millis();
-  }
-
-//---Конец Блока Управления
-
   if (millis() - ms_update > 3000) {
     if (MODE == MODE_WIFI) display_WIFI();
     if (MODE == MODE_SAIL||MODE == MODE_MOTOR) display_NAV();
-    LINKERROR=true;
     ms_update = millis();
   }
 

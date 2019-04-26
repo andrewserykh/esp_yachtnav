@@ -76,7 +76,7 @@ void html_menu (WiFiClient client){
   client.println("</div>");
 }
 
-void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG, bool ANCHOR, int ANCHOR_DRIFT, bool LINKERROR){ // refresh=1, если вызов первоначальный, а не из ajax обновления
+void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float HDG, float COG, bool ANCHOR, int ANCHOR_DRIFT, bool LINKERROR, int RUDDER_CUR){ // refresh=1, если вызов первоначальный, а не из ajax обновления
   if (!refresh) client.println("<div id='navdata'>");  
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);margin-top: -10px;'>");
   client.print("<div class='t1'>");
@@ -95,6 +95,11 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   client.println("<div class='t0' style='margin:1em;'>COG</div>");
   client.println("</div>");
   client.println("<br>");
+  client.print("<div class='t0' style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.print("<div>RUDDER: ");
+  client.print(RUDDER_CUR);
+  client.print("%</div>");  
+  client.print("</div>");    
   if (ANCHOR) {
     client.print("<div style='display: grid;grid-template-columns:repeat(1,1fr);grid-template-rows:repeat(1,2em);'>");
     client.print("<div>DRIFT: ");
@@ -164,7 +169,7 @@ void html_sail (WiFiClient client, bool AP){
   client.println("</div>");
 }
 
-void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE){
+void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE, int RUDDER_SET){
   const String on = "on";
   const String off = "off";
   client.println("<div class='t0' style='margin-top: 0px;'>DIRECTION</div>"); //-20px
@@ -186,19 +191,21 @@ void html_motor (WiFiClient client, bool AP,int M_GEAR,int M_THROTTLE){
   client.println("<a href='dir1p' class='s'>+1</a>");
   client.println("<a href='dir10p' class='s'>+10</a>");
   client.println("</div>");
-  client.println("<div class='t0'>RUDDER</div>");
+  client.print("<div class='t0'>RUDDER ");
+  client.print(RUDDER_SET);
+  client.println("%</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(1,2em);'>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s off' href='#'>&larr;</a>");
-  client.println("<a class='s on' href='#'>|</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
-  client.println("<a class='s off' href='#'>&rarr;</a>");
+  client.println("<a class='s off' href='rud0p'>&larr;</a>");
+  client.println("<a class='s off' href='rud1p'>&larr;</a>");
+  client.println("<a class='s off' href='rud2p'>&larr;</a>");
+  client.println("<a class='s off' href='rud3p'>&larr;</a>");
+  client.println("<a class='s off' href='rud4p'>&larr;</a>");
+  client.println("<a class='s on' href='rud5p'>|</a>");
+  client.println("<a class='s off' href='rud6p'>&rarr;</a>");
+  client.println("<a class='s off' href='rud7p'>&rarr;</a>");
+  client.println("<a class='s off' href='rud8p'>&rarr;</a>");
+  client.println("<a class='s off' href='rud9p'>&rarr;</a>");
+  client.println("<a class='s off' href='rud10p'>&rarr;</a>");
   client.println("</div>");
   client.println("<div class='t0'>GEAR/THROTTLE</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");

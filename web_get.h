@@ -70,6 +70,50 @@
             prefs.putUInt("cog", (int)COG);
             prefs.end();                                    
           }
+          else if (strstr(linebuf,"GET /rud0p") > 0){
+            RUDDER.Set=0;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud1p") > 0){
+            RUDDER.Set=10;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud2p") > 0){
+            RUDDER.Set=20;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud3p") > 0){
+            RUDDER.Set=30;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud4p") > 0){
+            RUDDER.Set=40;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud5p") > 0){
+            RUDDER.Set=50;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud6p") > 0){
+            RUDDER.Set=60;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud7p") > 0){
+            RUDDER.Set=70;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud8p") > 0){
+            RUDDER.Set=80;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud9p") > 0){
+            RUDDER.Set=90;
+            RUDDER.ms_start = millis();
+          }
+          else if (strstr(linebuf,"GET /rud10p") > 0){
+            RUDDER.Set=100;
+            RUDDER.ms_start = millis();
+          }
           else if (strstr(linebuf,"GET /SETcog") > 0){
             COG=HDG;
             prefs.begin("setup", false);
@@ -95,7 +139,7 @@
           else if (strstr(linebuf,"GET /ajaxnav") > 0){ // Запрошен ajax /xmlnav      
             isAJAX=true;
             html_http200ajax(client);
-            html_navdata(client,1,MODE,SOG,HDG,COG,ANCHOR,ANCHOR_DRIFT,LINKERROR); //1-вызов из ajax
+            html_navdata(client,1,MODE,SOG,HDG,COG,ANCHOR,ANCHOR_DRIFT,LINKERROR,RUDDER.Current); //1-вызов из ajax
           }
           else if (strstr(linebuf,"GET /mode_motor") > 0){
             MODE=MODE_MOTOR;
