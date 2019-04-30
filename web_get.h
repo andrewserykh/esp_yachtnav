@@ -229,13 +229,13 @@
             RUDDER.ms_tmax=RUDDER.ms_tmax-1000;
             if (RUDDER.ms_tmax<0) RUDDER.ms_tmax=0;
             prefs.begin("setup", false);
-            prefs.putUInt("rudtmax", RUDDER.ms_tmax);
+            prefs.putFloat("rudtmax", RUDDER.ms_tmax);
             prefs.end();
           } 
           else if (strstr(linebuf,"GET /rtmax1p") > 0){
             RUDDER.ms_tmax=RUDDER.ms_tmax+1000;
             prefs.begin("setup", false);
-            prefs.putUInt("rudtmax", RUDDER.ms_tmax);
+            prefs.putFloat("rudtmax", RUDDER.ms_tmax);
             prefs.end();
           }
           

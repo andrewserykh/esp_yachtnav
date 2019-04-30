@@ -129,8 +129,10 @@ void setup() {
   ANCHOR_DRIFT_MAX = prefs.getUInt("drift", 20);
   RUDDER.Current = prefs.getUInt("rudder",0);
   RUDDER.Set = prefs.getUInt("rudder",0);
-  RUDDER.ms_tmax = prefs.getUInt("rudtmax",10000);
+  RUDDER.ms_tmax = prefs.getFloat("rudtmax",10000);
   prefs.end();
+
+  RUDDER.ms_tmax = 10000;
 
   pinMode(0,INPUT);       //build-in btn
   pinMode(25,OUTPUT);     //bulid-in led
@@ -198,6 +200,8 @@ void loop() {
   if (RUDDER.Current != RUDDER.Set) { //Заданное положение румпеля не соответсвует текущему
     if (RUDDER.Current>100) RUDDER.Current = 100;
     if (RUDDER.Current<0) RUDDER.Current = 0;
+    if (RUDDER.CurAcc>100) RUDDER.CurAcc = 100;
+    if (RUDDER.CurAcc<0) RUDDER.CurAcc = 0;
     
     if (RUDDER.Current < RUDDER.Set){
       bitWrite ( dataesp.Relay,0,HIGH );
