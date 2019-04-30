@@ -131,6 +131,7 @@ void html_setup (WiFiClient client, bool LINKERROR,long RUDDER_TMAX){
   client.print(" s</div>");
   client.println("<a href='rtmax1p' class='s'>+1 s</a>");
   client.println("</div>");
+  client.println("<a class='t0' href='rtset0p'>RESET RUDDER MOVE TIME</a>");
   
 }
 

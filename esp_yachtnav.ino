@@ -1,4 +1,4 @@
-/* v2.11
+/* v2.11a
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
@@ -131,8 +131,6 @@ void setup() {
   RUDDER.Set = prefs.getUInt("rudder",0);
   RUDDER.ms_tmax = prefs.getFloat("rudtmax",10000);
   prefs.end();
-
-  RUDDER.ms_tmax = 10000;
 
   pinMode(0,INPUT);       //build-in btn
   pinMode(25,OUTPUT);     //bulid-in led

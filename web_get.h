@@ -238,6 +238,11 @@
             prefs.putFloat("rudtmax", RUDDER.ms_tmax);
             prefs.end();
           }
-          
+          else if (strstr(linebuf,"GET /rtset0p") > 0){
+            RUDDER.ms_tmax=10000;
+            prefs.begin("setup", false);
+            prefs.putFloat("rudtmax", RUDDER.ms_tmax);
+            prefs.end();
+          }          
           
 #endif
