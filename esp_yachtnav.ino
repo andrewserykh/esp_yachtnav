@@ -1,4 +1,4 @@
-/* v2.11a
+/* v2.12
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
@@ -65,18 +65,21 @@ bool  ANCHOR;             //Якорь опущен
 int   ANCHOR_DRIFT;       //Смещение от точки якорения
 int   ANCHOR_DRIFT_MAX;   //Максимальное смещение
 
-struct {
-  int Current;            //Текущее положение (0-100%)
-  int Set;                //Заданное положение (0-100%)
-  float CurAcc;           //Текущее положение с высокой точностью
-  long ms_tmax;           //Время хода от 0 до 100
-  long ms_start;          //Время начала движения
-} RUDDER;
+class Rudder {
+  public:
+    int Current;            //Текущее положение (0-100%)
+    int Set;                //Заданное положение (0-100%)
+    float CurAcc;           //Текущее положение с высокой точностью
+    long ms_tmax;           //Время хода от 0 до 100
+    long ms_start;          //Время начала движения
+};
+
+Rudder RUDDER;
 
 uint8_t LINKERRCOUNT;     //Счетчик ошибок связи
 bool  LINKERROR;          //Нет связи с Arduino-Nano
 
-char SerialNanoIn[64];    //буфер приема 
+char SerialNanoIn[128];    //буфер приема 
 byte SerialNanoInLen;     //заполнение буфера
 long SerialNanoInMillis;
 gpsnav GPS;
@@ -313,7 +316,7 @@ void loop() {
     char SerialChar = (char)SerialNano.read();
     SerialNanoIn[SerialNanoInLen] = SerialChar;
     SerialNanoInLen++;
-
+    if (SerialNanoInLen>126) SerialNanoInLen=0;
     SerialNanoInMillis = millis();
   }
   
