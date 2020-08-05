@@ -1,4 +1,5 @@
-/* v2.12
+/* v2.13
+Автопилот
 GPS и компас вынесены на nano
 WS обработка связи websocket
 NMEA класс создания сообщений
@@ -36,13 +37,14 @@ https://github.com/Links2004/arduinoWebSockets
 #define MODE_OTA        99
 
 #define T_MS_NANO       300   //ms интервал отправки команд
+#define T_MS_AP         2000  //ms дискретность регулирования
 
 Preferences prefs;  //EEPROM объект
 
 int ZOOM = 10;
-char *ssid = "CalypsoYacht";    // Название сети WiFi
+char *ssid = "CalypsoYacht";    // Названиßе сети WiFi
 char *password = "rulezzzz";    // Пароль для подключения
-char *OTAssid = "Escobar";      // Название сети WiFi для OTA
+char *OTAssid = "Andrew Serykh";      // Название сети WiFi для OTA
 char *OTApassword = "rulezzzz"; // Пароль для подключения
 SSD1306  display(0x3c, 4, 15);  //OLED - GPIO4-SDA, 15-SCL, 16-RST
 WiFiServer server(80);
@@ -64,6 +66,16 @@ bool  AP;                 //Autopilot Heading
 bool  ANCHOR;             //Якорь опущен
 int   ANCHOR_DRIFT;       //Смещение от точки якорения
 int   ANCHOR_DRIFT_MAX;   //Максимальное смещение
+
+//переменные автопилота
+int AP_rud_pow;           //Предыдущее воздействие
+int AP_diff;              //Предыдущее расхождение
+int AP_Deadzone;          //Зона нечувствительности +/-deadzone
+int AP_OutH;              //Верхняя граница управляющего воздействия
+int AP_DiffH;             //Максимум угла для регулирования
+int AP_Kzero;             //Коэффициент смещения середины руля ("0")
+int AP_Kzero_cnt;         //Счетчик изменения Kzero
+long ms_AP;               //Дискретность регулирования
 
 class Rudder {
   public:
@@ -125,7 +137,7 @@ void setup() {
   SerialNano.begin(9600, SERIAL_8N1, 5, 17); // BAUD,PARITY,RX,TX
 
   prefs.begin("setup", false); //инициализация non-voltage storage
-  MODE = prefs.getUInt("mode", 0);
+  MODE = prefs.getUInt("mode", MODE_SAIL);
   COG = (float)prefs.getUInt("cog", 0);
   ZOOM = prefs.getUInt("zoom", 10);
   ANCHOR = prefs.getBool("anchor",false);
@@ -133,6 +145,10 @@ void setup() {
   RUDDER.Current = prefs.getUInt("rudder",0);
   RUDDER.Set = prefs.getUInt("rudder",0);
   RUDDER.ms_tmax = prefs.getFloat("rudtmax",10000);
+  AP_Deadzone = prefs.getUInt("apdeadzone",3);
+  AP_OutH = prefs.getUInt("apouth",30);
+  AP_DiffH = prefs.getUInt("apdiffh",22);
+  AP_Kzero = prefs.getUInt("apkzero",0);
   prefs.end();
 
   pinMode(0,INPUT);       //build-in btn
@@ -247,6 +263,55 @@ void loop() {
   }
 
 //---Конец Блока Управления
+
+//---Блок автопилота
+  if (AP) {
+    if (millis() - ms_AP > T_MS_AP) { 
+        //1. Вычисляем наименьшую разницу между двумя углами
+        int rud_pow = 0;
+        double diff = fmod(HDG - COG, 360.0);        
+        if (diff < 0) diff = diff + 360.0;
+        if (diff > 180) diff = diff - 360.0;
+        diff = -diff;
+
+        //2. Угол diff больше зоны нечувствительности
+        if (abs(diff) > AP_Deadzone){
+
+          //3. Вычисляем усилие руля
+          rud_pow = (int) ( (diff * AP_OutH) / AP_DiffH );
+          if (rud_pow > AP_OutH) rud_pow = AP_OutH;
+          if (rud_pow < -AP_OutH) rud_pow = -AP_OutH;
+
+          //4. Корректировка "0" руля
+          if ( abs(AP_diff) < abs(diff) ){
+            AP_Kzero_cnt++;
+
+          if (AP_Kzero_cnt >10){
+            if (rud_pow >0) AP_Kzero++;
+            if (rud_pow <0) AP_Kzero--;
+            if (AP_Kzero >20) AP_Kzero = 20;
+            if (AP_Kzero <-20) AP_Kzero = -20;
+            AP_Kzero_cnt=0;
+          } else {
+            AP_Kzero_cnt=0;
+          }  
+          } //AP_Kzero          
+        } //AP_Deadzone
+
+        AP_rud_pow = rud_pow; //запоминаем управляющее воздействие
+        AP_diff = (int) diff; //запоминаем расхождение
+
+        RUDDER.Set = 50 + AP_Kzero + AP_rud_pow;
+        
+        //Serial.print("Diff = ");
+        //Serial.println(diff);
+        //Serial.print ("rud_pow=");
+        //Serial.println(rud_pow);
+        
+      ms_AP = millis();
+    } //ms
+  } //AP
+//---Конец блока автопилота
 
   if (MODE == MODE_OTA) {
     prefs.begin("setup", false); //инициализация non-voltage storage

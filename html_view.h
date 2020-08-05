@@ -21,7 +21,7 @@ html_navdata(client,0,MODE,SOG,HDG,COG,ANCHOR,ANCHOR_DRIFT,LINKERROR,RUDDER.Curr
 
 if (MODE==MODE_SAIL) html_sail(client,AP,RUDDER.Set);
 if (MODE==MODE_MOTOR) html_motor(client,AP,M_GEAR,M_THROTTLE,RUDDER.Set);
-if (MODE==MODE_SETUP) html_setup(client,LINKERROR,RUDDER.ms_tmax);
+if (MODE==MODE_SETUP) html_setup(client,LINKERROR,RUDDER.ms_tmax,AP_Deadzone,AP_OutH,AP_DiffH,AP_Kzero);
 if (MODE==MODE_ANCHOR) html_anchor(client,ANCHOR,GPS.lat,GPS.lng, PoiAnchor.lat, PoiAnchor.lng,ANCHOR_DRIFT_MAX);
 if (MODE==MODE_NAV) html_nav(client, GPS.lat, GPS.lng,GPS.hour,GPS.minute,GPS.second);
 

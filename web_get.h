@@ -243,6 +243,55 @@
             prefs.begin("setup", false);
             prefs.putFloat("rudtmax", RUDDER.ms_tmax);
             prefs.end();
-          }          
+          }
+          else if (strstr(linebuf,"GET /apdeadzone1m") > 0){
+            AP_Deadzone=AP_Deadzone-1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apdeadzone", AP_Deadzone);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apdeadzone1p") > 0){
+            AP_Deadzone=AP_Deadzone+1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apdeadzone", AP_Deadzone);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apouth5m") > 0){
+            AP_OutH=AP_OutH-5;
+            prefs.begin("setup", false);
+            prefs.putFloat("apouth", AP_OutH);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apouth5p") > 0){
+            AP_OutH=AP_OutH+5;
+            prefs.begin("setup", false);
+            prefs.putFloat("apouth", AP_OutH);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apdiffh1m") > 0){
+            AP_DiffH=AP_DiffH-1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apdiffh", AP_DiffH);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apdiffh1p") > 0){
+            AP_DiffH=AP_DiffH+1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apdiffh", AP_DiffH);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apkzero1m") > 0){
+            AP_Kzero=AP_Kzero-1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apkzero", AP_Kzero);
+            prefs.end();
+          }
+          else if (strstr(linebuf,"GET /apkzero1p") > 0){
+            AP_Kzero=AP_Kzero+1;
+            prefs.begin("setup", false);
+            prefs.putFloat("apkzero", AP_Kzero);
+            prefs.end();
+          }
+        
           
 #endif

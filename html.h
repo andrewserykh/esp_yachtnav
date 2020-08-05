@@ -110,7 +110,7 @@ void html_navdata (WiFiClient client, bool refresh, int MODE, float SOG, float H
   if (!refresh) client.println("</div>");
 }
 
-void html_setup (WiFiClient client, bool LINKERROR,long RUDDER_TMAX){
+void html_setup (WiFiClient client, bool LINKERROR,long RUDDER_TMAX, int AP_Deadzone, int AP_OutH, int AP_DiffH, int AP_Kzero){
   if (LINKERROR)   client.println("<div class='t0' style='color:#ff0000;'>LINK ERROR!!! CHECK WIRE TO NAVIGATION PLC!</div>");  
   client.println("<div class='t0'>ZOOM</div>");
   client.println("<div style='display: grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(1,2em);'>");
@@ -132,6 +132,42 @@ void html_setup (WiFiClient client, bool LINKERROR,long RUDDER_TMAX){
   client.println("<a href='rtmax1p' class='s'>+1 s</a>");
   client.println("</div>");
   client.println("<a class='t0' href='rtset0p'>RESET RUDDER MOVE TIME</a>");
+
+  client.println("<div class='t0' style='margin-top: 0px;'>AP DEADZONE (%)</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='apdeadzone1m' class='s'>-1%</a>");
+  client.print("<div>");
+  client.print(AP_Deadzone);
+  client.print("%</div>");
+  client.println("<a href='apdeadzone1p' class='s'>+1%</a>");
+  client.println("</div>");
+
+  client.println("<div class='t0' style='margin-top: 0px;'>AP OUT HIGH (%)</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='apouth5m' class='s'>-5%</a>");
+  client.print("<div>");
+  client.print(AP_OutH);
+  client.print("%</div>");
+  client.println("<a href='apouth5p' class='s'>+5%</a>");
+  client.println("</div>");
+
+  client.println("<div class='t0' style='margin-top: 0px;'>AP DIFF HIGH (deg)</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='apdiffh1m' class='s'>-1 deg</a>");
+  client.print("<div>");
+  client.print(AP_DiffH);
+  client.print("%</div>");
+  client.println("<a href='apdiffh1p' class='s'>+1 deg</a>");
+  client.println("</div>");
+
+  client.println("<div class='t0' style='margin-top: 0px;'>AP Kzero (%)</div>"); //-20px
+  client.println("<div style='display: grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(1,2em);'>");
+  client.println("<a href='apkzero1m' class='s'>-1 %</a>");
+  client.print("<div>");
+  client.print(AP_Kzero);
+  client.print("%</div>");
+  client.println("<a href='apkzero1p' class='s'>+1 %</a>");
+  client.println("</div>");
   
 }
 
